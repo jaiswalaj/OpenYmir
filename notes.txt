@@ -1,0 +1,37 @@
+mkdir personalopenstack
+cd personalopenstack
+virtualenv venv
+code .
+
+// Activate the virtual env in vs code
+source venv/bin/activate
+
+//Check requirements.txt and install required python pacakages via pip
+
+// Create two new folder in the root project directory "backend" and "py_client"
+// "backend" is the core api and "py_client" is the one which consumes the "backend" Django Rest API
+
+cd backend
+django-admin startproject cloudhome .
+ls
+
+// Dummy online API endpoint URL for testing purpose: https://httpbin.org/
+
+python manage.py startapp api
+// Add this 'api' app in Settings.py file
+// Open views.py and start working now.
+
+// After creating ServerSerializer
+python manage.py shell
+
+from api.serializers import ServerSerializer
+from rest_framework.renderers import JSONRenderer
+from rest_framework.parsers import JSONParser
+server = ServerSerializer(data={'instance_name': 'test_shell_2', 'image_id': 'b6019f25-6f6d-4fd2-9fb8-14d50a07d2c0', 'flavor_id': '42', 'network_id': '8e98725e-eee2-4d53-8e95-efbc01d54b81'})
+server.is_valid()
+// content = JSONRenderer().render(server.data)
+// content
+server.validated_data
+server.save()
+server = ServerSerializer(conn.compute.servers(), many=True)
+server.data
