@@ -35,3 +35,22 @@ server.validated_data
 server.save()
 server = ServerSerializer(conn.compute.servers(), many=True)
 server.data
+
+API Endpoints:-
+1. http://127.0.0.1:8000/api/resources/servers/                                         -->     GET and POST
+    http://127.0.0.1:8000/api/resources/servers/<server-id>/                            -->     GET and DELETE
+    http://127.0.0.1:8000/api/resources/servers/<server-id>/start/                      -->     PUT
+    http://127.0.0.1:8000/api/resources/servers/<server-id>/stop/                       -->     PUT
+    http://127.0.0.1:8000/api/resources/servers/<server-id>/allocate-floating-ip/       -->     PUT
+
+2. http://127.0.0.1:8000/api/resources/networks/                                        -->     GET and POST
+    http://127.0.0.1:8000/api/resources/networks/<network-id>/                          -->     GET and DELETE
+
+3. http://127.0.0.1:8000/api/resources/images/                                          -->     GET and POST
+    http://127.0.0.1:8000/api/resources/images/<image-id>/                              -->     GET and DELETE
+
+4. http://127.0.0.1:8000/api/resources/routers/                                         -->     GET and POST
+    http://127.0.0.1:8000/api/resources/routers/<router-id>/                            -->     GET and DELETE
+
+5. http://127.0.0.1:8000/api/resources/flavors/                                         -->     GET and POST
+    http://127.0.0.1:8000/api/resources/flavors/<flavor-id>/                            -->     GET and DELETE

@@ -1,5 +1,6 @@
 from django.urls import Resolver404
 import openstack
+from requests import Response
 from rest_framework import serializers
 
 class DummySerializer(serializers.Serializer):
@@ -11,14 +12,24 @@ class DummySerializer(serializers.Serializer):
 
 class ServerSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
+    links = serializers.ListField(read_only=True)
+    addresses = serializers.DictField(read_only=True)
+    attached_volumes = serializers.CharField(read_only=True)
+    interface_ip = serializers.CharField(read_only=True)
+    key_name = serializers.CharField(read_only=True)
+    server_groups = serializers.CharField(read_only=True)
+    description = serializers.CharField(max_length=100, required=False)
     name = serializers.CharField(max_length=100)
-    image = serializers.CharField(max_length=500, read_only=True)
-    image_id = serializers.CharField(max_length=500)
-    flavor = serializers.CharField(max_length=500, read_only=True)
+    image = serializers.CharField(read_only=True)
+    image_id = serializers.Field()
+    flavor = serializers.CharField(read_only=True)
     flavor_id = serializers.CharField(max_length=500)
     status = serializers.CharField(max_length=20, read_only=True)
     power_state = serializers.CharField(max_length=20, read_only=True)
     networks = serializers.CharField(max_length=500)
+
+    def list():
+        return Response({"detail": "DONE @#!"})
 
     def create(self, validated_data):
         openstack.enable_logging(debug=True)
@@ -64,6 +75,7 @@ class RouterSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
     name = serializers.CharField(max_length=100, read_only=True)
     status = serializers.CharField(max_length=20, read_only=True)
+    external_gateway_info = serializers.DictField(read_only=True)
 
     def create(self, validated_data):
         raise Resolver404()
