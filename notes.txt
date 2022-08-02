@@ -54,3 +54,4 @@ API Endpoints:-
 
 5. http://127.0.0.1:8000/api/resources/flavors/                                         -->     GET and POST
     http://127.0.0.1:8000/api/resources/flavors/<flavor-id>/                            -->     GET and DELETE
+    

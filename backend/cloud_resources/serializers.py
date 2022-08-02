@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.urls import Resolver404
 import openstack
 from requests import Response
@@ -18,10 +19,9 @@ class ServerSerializer(serializers.Serializer):
     interface_ip = serializers.CharField(read_only=True)
     key_name = serializers.CharField(read_only=True)
     server_groups = serializers.CharField(read_only=True)
-    description = serializers.CharField(max_length=100, required=False)
     name = serializers.CharField(max_length=100)
     image = serializers.CharField(read_only=True)
-    image_id = serializers.Field()
+    image_id = serializers.CharField(max_length=500)
     flavor = serializers.CharField(read_only=True)
     flavor_id = serializers.CharField(max_length=500)
     status = serializers.CharField(max_length=20, read_only=True)
@@ -52,7 +52,7 @@ class NetworkSerializer(serializers.Serializer):
     status = serializers.CharField(max_length=20, read_only=True)
 
     def create(self, validated_data):
-        raise Resolver404()
+        raise Http404("Forbidden Request")
 
 class ImageSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
@@ -60,7 +60,7 @@ class ImageSerializer(serializers.Serializer):
     status = serializers.CharField(max_length=20, read_only=True)
 
     def create(self, validated_data):
-        raise Resolver404()
+        raise Http404("Forbidden Request")
 
 
 class FlavorSerializer(serializers.Serializer):
@@ -68,7 +68,7 @@ class FlavorSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100, read_only=True)
 
     def create(self, validated_data):
-        raise Resolver404()
+        raise Http404("Forbidden Request")
 
 
 class RouterSerializer(serializers.Serializer):
@@ -78,4 +78,4 @@ class RouterSerializer(serializers.Serializer):
     external_gateway_info = serializers.DictField(read_only=True)
 
     def create(self, validated_data):
-        raise Resolver404()
+        raise Http404("Forbidden Request")

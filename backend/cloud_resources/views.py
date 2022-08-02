@@ -39,6 +39,7 @@ class ResourceList(generics.ListCreateAPIView):
     
     def list(self, request, pk):
         try:
+            self.serialized_data = []
             self.__init__(self, pk=pk)
         except Exception as e:
             return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
@@ -53,7 +54,8 @@ class ResourceList(generics.ListCreateAPIView):
                 console_url = conn.compute.get_server_console_url(server=data['id'],console_type="novnc")["url"]
                 
                 address_list = []
-                for address_data in data['addresses']['shared']:
+                for key in data['addresses']:
+                    for address_data in data['addresses'][key]:
                         address_list.append(address_data['addr'])
 
                 image_name = ""
@@ -149,7 +151,7 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
         except Exception as e:
             return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
 
-        if self.serializer_class == DummySerializer:
+        if self.serializer_class == DummySerializer or self.resource is None:
             return Response({"detail": "URL Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({"detail": "The Resource is being Deleted"}, status=status.HTTP_204_NO_CONTENT)
