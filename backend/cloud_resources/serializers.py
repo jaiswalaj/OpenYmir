@@ -28,9 +28,6 @@ class ServerSerializer(serializers.Serializer):
     power_state = serializers.CharField(max_length=20, read_only=True)
     networks = serializers.CharField(max_length=500)
 
-    def list():
-        return Response({"detail": "DONE @#!"})
-
     def create(self, validated_data):
         openstack.enable_logging(debug=True)
         conn=openstack.connection.Connection(auth_url='http://192.168.56.101/identity/v3',

@@ -51,20 +51,32 @@ class ResourceList(generics.ListCreateAPIView):
 
         if pk == "servers":
             for data in self.serializer.data:
-                console_url = conn.compute.get_server_console_url(server=data['id'],console_type="novnc")["url"]
-                
+                try:
+                    console_url = conn.compute.get_server_console_url(server=data['id'],console_type="novnc")["url"]
+                except:
+                    console_url = ""
+
                 address_list = []
-                for key in data['addresses']:
-                    for address_data in data['addresses'][key]:
-                        address_list.append(address_data['addr'])
+                try:
+                    for key in data['addresses']:
+                        for address_data in data['addresses'][key]:
+                            address_list.append(address_data['addr'])
+                except:
+                    address_list = []
 
                 image_name = ""
-                imageID = data['image'].split("id=")[1].split(",")[0]
-                imageDetails = conn.image.find_image(imageID, ignore_missing=False)
-                image_name = imageDetails.name
-
-                flavor_name = data['flavor'].split("original_name=")[1].split(",")[0]
+                try:
+                    imageID = data['image'].split("id=")[1].split(",")[0]
+                    imageDetails = conn.image.find_image(imageID, ignore_missing=False)
+                    image_name = imageDetails.name
+                except:
+                    image_name = ""
                 
+                try:
+                    flavor_name = data['flavor'].split("original_name=")[1].split(",")[0]
+                except:
+                    flavor_name = ""
+
                 self.serialized_data.append({
                     "id" : data['id'], 
                     "name": data['name'],
@@ -74,6 +86,7 @@ class ResourceList(generics.ListCreateAPIView):
                     "image_name": image_name,
                     "flavor": flavor_name,
                     })
+                
 
             return Response(self.serialized_data, status=status.HTTP_200_OK)
 
@@ -98,6 +111,33 @@ class ResourceList(generics.ListCreateAPIView):
 class ResourceDetail(generics.RetrieveDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = DummySerializer
+
+
+    def removeAllFloatingIPsFromRouter(self, router_id):
+        floating_ips = conn.list_floating_ips({"router_id": router_id})
+        for floating_ip in floating_ips:
+            conn.network.delete_ip(floating_ip.id)
+
+ 
+    def removeAllResourcesFromNetwork(self, network_id):
+        ports = conn.list_ports(filters={"network_id": network_id})
+        for port in ports:
+            conn.compute.delete_server(port.device_id)
+            try:
+                self.removeAllFloatingIPsFromRouter(port.device_id)
+                router = conn.network.get_router(port.device_id)
+                updated_router = conn.network.remove_interface_from_router(router, subnet_id=port.fixed_ips[0]['subnet_id'])
+            except:
+                pass            
+
+
+    def removeAllSubnetsFromRouter(self, router_id):
+        subnet_id_list = conn.network.subnets()
+        for subnet_id in subnet_id_list:
+            try:
+                conn.network.remove_interface_from_router(router_id, subnet_id.id)
+            except Exception as e:
+                pass
 
     def retrieve(self, request, pk, pk2):
         try:
@@ -134,8 +174,13 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
                 self.resource = conn.compute.delete_server(pk2)
                 self.serializer_class = ServerSerializer
             elif pk == "networks":
-                self.resource = conn.network.delete_network(pk2)
-                self.serializer_class = NetworkSerializer
+                self.removeAllResourcesFromNetwork(pk2)
+                while conn.network.find_network(pk2) is not None:
+                    try:
+                        self.resource = conn.network.delete_network(pk2)
+                        self.serializer_class = NetworkSerializer
+                    except:
+                        pass
             elif pk == "images":
                 self.resource = conn.image.delete_image(pk2)
                 self.serializer_class = ImageSerializer
@@ -143,6 +188,8 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
                 self.resource = conn.compute.delete_flavor(pk2)
                 self.serializer_class = FlavorSerializer
             elif pk == "routers":
+                self.removeAllFloatingIPsFromRouter(pk2)
+                self.removeAllSubnetsFromRouter(pk2)
                 self.resource = conn.network.delete_router(pk2)
                 self.serializer_class = RouterSerializer
             else:
@@ -151,7 +198,8 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
         except Exception as e:
             return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
 
-        if self.serializer_class == DummySerializer or self.resource is None:
+        # if self.serializer_class == DummySerializer or self.resource is None:
+        if self.serializer_class == DummySerializer:
             return Response({"detail": "URL Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({"detail": "The Resource is being Deleted"}, status=status.HTTP_204_NO_CONTENT)
