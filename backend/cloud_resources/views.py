@@ -1,4 +1,4 @@
-from .serializers import DummySerializer, NetworkSerializer, ServerSerializer, ImageSerializer, FlavorSerializer, RouterSerializer
+from .serializers import DummySerializer, NetworkSerializer, ServerSerializer, ImageSerializer, FlavorSerializer, RouterSerializer, SubnetSerializer
 from rest_framework.response import Response
 from rest_framework import generics, status, permissions
 from .connect import conn
@@ -16,6 +16,9 @@ class ResourceList(generics.ListCreateAPIView):
         elif kwargs.get("pk") == "networks":
             self.queryset = conn.network.networks()
             self.serializer_class = NetworkSerializer
+        elif kwargs.get("pk") == "subnets":
+            self.queryset = conn.network.subnets()
+            self.serializer_class = SubnetSerializer
         elif kwargs.get("pk") == "images":
             self.queryset = conn.image.images()
             self.serializer_class = ImageSerializer
@@ -90,7 +93,7 @@ class ResourceList(generics.ListCreateAPIView):
             self.__init__(self, pk=pk)
             serializer = self.serializer_class(data=request.data)
             serializer.is_valid(raise_exception=True)
-            # Show a loader till the following line does not return a Server object.
+            # Show a loader till the following line does not return a valid object.
             serializer.save()
         except Exception as e:
             return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)

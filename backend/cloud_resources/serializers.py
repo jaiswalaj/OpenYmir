@@ -18,14 +18,14 @@ class ServerSerializer(serializers.Serializer):
     interface_ip = serializers.CharField(read_only=True)
     key_name = serializers.CharField(read_only=True)
     server_groups = serializers.CharField(read_only=True)
-    name = serializers.CharField(max_length=100)
+    name = serializers.CharField(max_length=100, required=True)
     image = serializers.CharField(read_only=True)
-    image_id = serializers.CharField(max_length=500)
+    image_id = serializers.CharField(max_length=100, required=True)
     flavor = serializers.CharField(read_only=True)
-    flavor_id = serializers.CharField(max_length=500)
-    status = serializers.CharField(max_length=20, read_only=True)
-    power_state = serializers.CharField(max_length=20, read_only=True)
-    networks = serializers.CharField(max_length=500)
+    flavor_id = serializers.CharField(max_length=50, required=True)
+    status = serializers.CharField(read_only=True)
+    power_state = serializers.CharField(read_only=True)
+    networks = serializers.CharField(max_length=100, required=True)
 
     def create(self, validated_data):
         serverCreated = conn.compute.create_server(name=validated_data["name"], image_id=validated_data["image_id"], 
@@ -37,17 +37,35 @@ class ServerSerializer(serializers.Serializer):
 
 class NetworkSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
-    name = serializers.CharField(max_length=100, read_only=True)
-    status = serializers.CharField(max_length=20, read_only=True)
+    name = serializers.CharField(max_length=100, required=True)
+    status = serializers.CharField(read_only=True)
     is_default = serializers.BooleanField(read_only=True)
 
     def create(self, validated_data):
-        raise Http404("Forbidden Request")
+        # raise Http404("Forbidden Request")
+        new_network = conn.network.create_network(name=validated_data['name'])
+        return new_network
+
+
+
+class SubnetSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    name = serializers.CharField(max_length=100, required=True)
+    status = serializers.CharField(read_only=True)
+    network_id = serializers.CharField(max_length=100, required=True)
+    ip_version = serializers.IntegerField(read_only=True)
+    cidr = serializers.CharField(max_length=20, required=True)
+
+    def create(self, validated_data):
+        cidr = "10.0.0.0/"+validated_data['cidr']
+        new_subnet = conn.network.create_subnet(name=validated_data["name"], network_id=validated_data["network_id"], ip_version=4, cidr=cidr)
+        return new_subnet
+
 
 class ImageSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
-    name = serializers.CharField(max_length=100, read_only=True)
-    status = serializers.CharField(max_length=20, read_only=True)
+    name = serializers.CharField(read_only=True)
+    status = serializers.CharField(read_only=True)
 
     def create(self, validated_data):
         raise Http404("Forbidden Request")
@@ -55,7 +73,7 @@ class ImageSerializer(serializers.Serializer):
 
 class FlavorSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
-    name = serializers.CharField(max_length=100, read_only=True)
+    name = serializers.CharField(read_only=True)
 
     def create(self, validated_data):
         raise Http404("Forbidden Request")
@@ -63,9 +81,11 @@ class FlavorSerializer(serializers.Serializer):
 
 class RouterSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
-    name = serializers.CharField(max_length=100, read_only=True)
-    status = serializers.CharField(max_length=20, read_only=True)
+    name = serializers.CharField(max_length=100, required=True)
+    status = serializers.CharField(read_only=True)
     external_gateway_info = serializers.DictField(read_only=True)
 
     def create(self, validated_data):
-        raise Http404("Forbidden Request")
+        new_router = conn.network.create_router(name=validated_data["name"])
+        return new_router
+        # raise Http404("Forbidden Request")
