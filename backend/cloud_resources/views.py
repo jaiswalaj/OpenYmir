@@ -1,15 +1,7 @@
 from .serializers import DummySerializer, NetworkSerializer, ServerSerializer, ImageSerializer, FlavorSerializer, RouterSerializer
 from rest_framework.response import Response
 from rest_framework import generics, status, permissions
-import openstack
-
-openstack.enable_logging(debug=True)
-conn=openstack.connection.Connection(auth_url='http://192.168.56.101/identity/v3',
-                           project_name='admin',username='admin',
-                           password='nomoresecret',
-                           user_domain_id='default',
-                           project_domain_id='default', verify=False)
-
+from .connect import conn
 
 
 class ResourceList(generics.ListCreateAPIView):
