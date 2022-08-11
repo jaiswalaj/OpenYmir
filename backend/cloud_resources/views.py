@@ -9,103 +9,112 @@ class ResourceList(generics.ListCreateAPIView):
     serializer_class = DummySerializer
     serialized_data = []
 
+
+    def customServerListOutput(self):
+        for data in self.serializer.data:
+            server = conn.get_server_by_id(data['id'])
+            try:
+                console_url = conn.compute.get_server_console_url(server=server,console_type="novnc")["url"]
+            except:
+                console_url = ""
+
+            private_ip = conn.get_server_private_ip(server)
+            public_floating_ip = conn.get_server_public_ip(server)
+
+            image_name = ""
+            try:
+                image_name = conn.image.find_image(server.get('image', {}).get('id'), ignore_missing=False).name
+            except:
+                image_name = ""
+            
+            try:
+                flavor_name = server.get('flavor', {}).get('name')
+            except:
+                flavor_name = ""
+
+            self.serialized_data.append({
+                "id" : server.get('id'), 
+                "name": server.get('name'),
+                "status": server.get('status'),
+                "console_url": console_url,
+                "private_ip": private_ip,
+                "public_floating_ip": public_floating_ip,
+                "image_name": image_name,
+                "flavor": flavor_name,
+                })
+            
+        return Response(self.serialized_data, status=status.HTTP_200_OK)
+
+
     def __init__(self, *args, **kwargs):
-        if kwargs.get("pk") == "servers":
-            self.queryset = conn.compute.servers()
-            self.serializer_class = ServerSerializer
-        elif kwargs.get("pk") == "networks":
-            self.queryset = conn.network.networks()
-            self.serializer_class = NetworkSerializer
-        elif kwargs.get("pk") == "subnets":
-            self.queryset = conn.network.subnets()
-            self.serializer_class = SubnetSerializer
-        elif kwargs.get("pk") == "images":
-            self.queryset = conn.image.images()
-            self.serializer_class = ImageSerializer
-        elif kwargs.get("pk") == "flavors":
-            self.queryset = conn.compute.flavors()
-            self.serializer_class = FlavorSerializer
-        elif kwargs.get("pk") == "routers":
-            self.queryset = conn.network.routers()
-            self.serializer_class = RouterSerializer
-        else:
-            self.queryset = None
-            self.serializer_class = DummySerializer
-    
+        self.allowed_args_dict = {
+            "servers": (conn.compute.servers, ServerSerializer, self.customServerListOutput),
+            "networks": (conn.network.networks, NetworkSerializer, None),
+            "subnets": (conn.network.subnets, SubnetSerializer, None),
+            "images": (conn.image.images, ImageSerializer, None),
+            "flavors": (conn.compute.flavors, FlavorSerializer, None),
+            "routers": (conn.network.routers, RouterSerializer, None),
+        }
+
+
     def list(self, request, pk):
         try:
             self.serialized_data = []
-            self.__init__(self, pk=pk)
+            self.__init__(self)
+            self.queryset = self.allowed_args_dict[pk][0]()
+            self.serializer_class = self.allowed_args_dict[pk][1]
+        except KeyError as e:
+            return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
 
-        if self.serializer_class == DummySerializer:
-            return Response({"detail": "URL Not found."}, status=status.HTTP_404_NOT_FOUND)
-        
         self.serializer = self.serializer_class(self.queryset, many=True)
+        return Response(self.serializer.data, status=status.HTTP_200_OK) if self.allowed_args_dict[pk][2] is None else self.allowed_args_dict[pk][2]()
 
-        if pk == "servers":
-            for data in self.serializer.data:
-                try:
-                    console_url = conn.compute.get_server_console_url(server=data['id'],console_type="novnc")["url"]
-                except:
-                    console_url = ""
-
-                address_list = []
-                try:
-                    for key in data['addresses']:
-                        for address_data in data['addresses'][key]:
-                            address_list.append(address_data['addr'])
-                except:
-                    address_list = []
-
-                image_name = ""
-                try:
-                    imageID = data['image'].split("id=")[1].split(",")[0]
-                    imageDetails = conn.image.find_image(imageID, ignore_missing=False)
-                    image_name = imageDetails.name
-                except:
-                    image_name = ""
-                
-                try:
-                    flavor_name = data['flavor'].split("original_name=")[1].split(",")[0]
-                except:
-                    flavor_name = ""
-
-                self.serialized_data.append({
-                    "id" : data['id'], 
-                    "name": data['name'],
-                    "status": data['status'],
-                    "console_url": console_url,
-                    "addresses": address_list,
-                    "image_name": image_name,
-                    "flavor": flavor_name,
-                    })
-                
-
-            return Response(self.serialized_data, status=status.HTTP_200_OK)
-
-
-        return Response(self.serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, pk):
         try:
-            self.__init__(self, pk=pk)
-            serializer = self.serializer_class(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            # Show a loader till the following line does not return a valid object.
-            serializer.save()
+            self.serialized_data = []
+            self.__init__(self)
+            self.queryset = self.allowed_args_dict[pk][0]()
+            self.serializer_class = self.allowed_args_dict[pk][1]
+            self.serializer = self.serializer_class(data=request.data)
+            self.serializer.is_valid(raise_exception=True)
+            # Show a loader till the following line does not return a valid JSON Response.
+            self.serializer.save()
+        except KeyError as e:
+            return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
         
         # Show a loader till the following line does not returns new server details as API Response.
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(self.serializer.data, status=status.HTTP_201_CREATED)
 
 
     
 class ResourceDetail(generics.RetrieveDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = DummySerializer
+    serialized_data = []
+
+    def __init__(self, *args, **kwargs):
+        self.allowed_retrieve_args_dict = {
+            "servers": (conn.compute.get_server, ServerSerializer),
+            "networks": (conn.network.get_network, NetworkSerializer),
+            "subnets": (conn.network.get_subnet, SubnetSerializer),
+            "images": (conn.image.get_image, ImageSerializer),
+            "flavors": (conn.compute.get_flavor, FlavorSerializer),
+            "routers": (conn.network.get_router, RouterSerializer),
+        }
+
+        self.allowed_destroy_args_dict = {
+            "servers": (conn.compute.delete_server, ServerSerializer, None),
+            "networks": (conn.network.delete_network, NetworkSerializer, self.removeAllResourcesFromNetwork),
+            "subnets": (conn.network.delete_subnet, SubnetSerializer, None),
+            "images": (conn.image.delete_image, ImageSerializer, None),
+            "flavors": (conn.compute.delete_flavor, FlavorSerializer, None),
+            "routers": (conn.network.delete_router, RouterSerializer, self.removeAllResourcesFromRouter),
+        }
 
 
     def removeAllFloatingIPsFromRouter(self, router_id):
@@ -117,16 +126,24 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
     def removeAllResourcesFromNetwork(self, network_id):
         ports = conn.list_ports(filters={"network_id": network_id})
         for port in ports:
-            conn.compute.delete_server(port.device_id)
+            server = conn.compute.find_server(port.device_id)
+            if server is None:
+                continue
+            else:
+                conn.compute.delete_server(port.device_id)
+                conn.compute.wait_for_delete(server)
+        
+        ports = conn.list_ports(filters={"network_id": network_id})
+        for port in ports:
             try:
-                self.removeAllFloatingIPsFromRouter(port.device_id)
                 router = conn.network.get_router(port.device_id)
                 updated_router = conn.network.remove_interface_from_router(router, subnet_id=port.fixed_ips[0]['subnet_id'])
             except:
-                pass            
+                pass    
 
 
-    def removeAllSubnetsFromRouter(self, router_id):
+    def removeAllResourcesFromRouter(self, router_id):
+        self.removeAllFloatingIPsFromRouter(router_id)
         subnet_id_list = conn.network.subnets()
         for subnet_id in subnet_id_list:
             try:
@@ -134,72 +151,39 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
             except Exception as e:
                 pass
 
-    def retrieve(self, request, pk, pk2):
-        try:
-            if pk == "servers":
-                self.resource = conn.compute.get_server(pk2)
-                self.serializer_class = ServerSerializer
-            elif pk == "networks":
-                self.resource = conn.network.get_network(pk2)
-                self.serializer_class = NetworkSerializer
-            elif pk == "images":
-                self.resource = conn.image.get_image(pk2)
-                self.serializer_class = ImageSerializer
-            elif pk == "flavors":
-                self.resource = conn.compute.get_flavor(pk2)
-                self.serializer_class = FlavorSerializer
-            elif pk == "routers":
-                self.resource = conn.network.get_router(pk2)
-                self.serializer_class = RouterSerializer
-            else:
-                self.resource = None
-                self.serializer_class = DummySerializer
-        except Exception as e:
-            return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
-
-        if self.serializer_class == DummySerializer:
-            return Response({"detail": "URL Not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = self.serializer_class(self.resource)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self,request, pk, pk2):
         try:
-            if pk == "servers":
-                self.resource = conn.compute.delete_server(pk2)
-                self.serializer_class = ServerSerializer
-            elif pk == "networks":
-                self.removeAllResourcesFromNetwork(pk2)
-                while conn.network.find_network(pk2) is not None:
-                    try:
-                        self.resource = conn.network.delete_network(pk2)
-                        self.serializer_class = NetworkSerializer
-                    except:
-                        pass
-            elif pk == "images":
-                self.resource = conn.image.delete_image(pk2)
-                self.serializer_class = ImageSerializer
-            elif pk == "flavors":
-                self.resource = conn.compute.delete_flavor(pk2)
-                self.serializer_class = FlavorSerializer
-            elif pk == "routers":
-                self.removeAllFloatingIPsFromRouter(pk2)
-                self.removeAllSubnetsFromRouter(pk2)
-                self.resource = conn.network.delete_router(pk2)
-                self.serializer_class = RouterSerializer
-            else:
-                self.resource = None
-                self.serializer_class = DummySerializer
+            self.serialized_data = []
+            self.__init__(self)
+
+            if self.allowed_destroy_args_dict[pk][2] is not None:
+                self.allowed_destroy_args_dict[pk][2](pk2) 
+            
+            self.queryset = self.allowed_destroy_args_dict[pk][0](pk2)
+            self.serializer_class = self.allowed_destroy_args_dict[pk][1]
+        except KeyError as e:
+            return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
 
-        # if self.serializer_class == DummySerializer or self.resource is None:
-        if self.serializer_class == DummySerializer:
-            return Response({"detail": "URL Not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "The resource is being deleted"}, status=status.HTTP_204_NO_CONTENT)        
 
-        return Response({"detail": "The Resource is being Deleted"}, status=status.HTTP_204_NO_CONTENT)
+
+    def retrieve(self, request, pk, pk2):
+        try:
+            self.serialized_data = []
+            self.__init__(self)
+            self.queryset = self.allowed_retrieve_args_dict[pk][0](pk2)
+            self.serializer_class = self.allowed_retrieve_args_dict[pk][1]
+        except KeyError as e:
+            return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
+        
+        self.serializer = self.serializer_class(self.queryset)
+        return Response(self.serializer.data, status=status.HTTP_200_OK)
     
-
 
 class ResourceUpdate(generics.UpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
