@@ -66,7 +66,8 @@ class ResourceList(generics.ListCreateAPIView):
         except KeyError as e:
             return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response({ "exception": repr(e),
+                "detail": repr(e.__dict__['details'])}, status=status.HTTP_400_BAD_REQUEST)
 
         self.serializer = self.serializer_class(self.queryset, many=True)
         return Response(self.serializer.data, status=status.HTTP_200_OK) if self.allowed_args_dict[pk][2] is None else self.allowed_args_dict[pk][2]()
@@ -85,7 +86,8 @@ class ResourceList(generics.ListCreateAPIView):
         except KeyError as e:
             return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response({ "exception": repr(e),
+                "detail": repr(e.__dict__['details'])}, status=status.HTTP_400_BAD_REQUEST)
         
         # Show a loader till the following line does not returns new server details as API Response.
         return Response(self.serializer.data, status=status.HTTP_201_CREATED)
@@ -165,7 +167,8 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
         except KeyError as e:
             return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response({ "exception": repr(e),
+                "detail": repr(e.__dict__['details'])}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"detail": "The resource is being deleted"}, status=status.HTTP_204_NO_CONTENT)        
 
@@ -179,7 +182,8 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
         except KeyError as e:
             return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response({ "exception": repr(e),
+                "detail": repr(e.__dict__['details'])}, status=status.HTTP_400_BAD_REQUEST)
         
         self.serializer = self.serializer_class(self.queryset)
         return Response(self.serializer.data, status=status.HTTP_200_OK)
@@ -188,39 +192,48 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
 class ResourceUpdate(generics.UpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = DummySerializer
+    serialized_data = []
+    # queryset_action = None
+
+    def waitForServerStart(self, server):
+        return conn.compute.wait_for_server(server, status='ACTIVE', failures=None, interval=2, wait=120)
+
+    def waitForServerStop(self, server):
+        return conn.compute.wait_for_server(server, status='SHUTOFF', failures=None, interval=2, wait=120)
+
+    def associateFloatingIP(self, server):
+        return conn.add_auto_ip(server, wait=True, timeout=120, reuse=True)
+
+    def __init__(self, *args, **kwargs):
+        self.allowed_args_dict = {
+            "servers": (conn.compute.get_server, ServerSerializer, {
+                "start": (conn.compute.start_server, self.waitForServerStart),
+                "stop": (conn.compute.stop_server, self.waitForServerStop),
+                "allocate-floating-ip": (self.associateFloatingIP, None),
+            }),
+        }
+
 
     def update(self, request, pk, pk2, pk3):
         try:
-            if pk == "servers":
-                server = conn.compute.get_server(pk2)
-                if pk3 == "start":
-                    self.resource = conn.compute.start_server(pk2)
-                    self.serializer_class = ServerSerializer
-                    # Show a loader till the following line does not return a Server object.
-                    conn.compute.wait_for_server(server, status='ACTIVE', failures=None, interval=2, wait=120)
-                    # Show a loader till the following line does not return the given message as API Response.
-                    self.messgae = {"detail": "Server Started"}
-                elif pk3 == "stop":
-                    self.resource = conn.compute.stop_server(pk2)
-                    self.serializer_class = ServerSerializer
-                    # Show a loader till the following line does not return a Server object.
-                    conn.compute.wait_for_server(server, status='ACTIVE', failures=None, interval=2, wait=120)
-                    # Show a loader till the following line does not return the given message as API Response.
-                    self.messgae = {"detail": "Server Stopped"}
-                elif pk3 == "allocate-floating-ip":
-                    self.serializer_class = ServerSerializer
-                    self.resource = conn.add_auto_ip(server, wait=True, timeout=60, reuse=True)
-                    self.messgae = {"detail": "For Server ID: "+pk2+", Floating IP Allocated is: "+self.resource}
-                else:
-                    self.resource = None
-                    self.serializer_class = DummySerializer
-            else:
-                self.resource = None
-                self.serializer_class = DummySerializer
+            self.serialized_data = []
+            self.__init__(self)
+            # Resource Instance
+            self.queryset = self.allowed_args_dict[pk][0](pk2)
+            # Resource Serialier
+            self.serializer_class = self.allowed_args_dict[pk][1]
+            # Resource Action to be updated in the Instance
+            self.queryset_action = self.allowed_args_dict[pk][2][pk3][0](self.queryset)
+            # Resource After Action Requirement
+            if self.allowed_args_dict[pk][2][pk3][1] is not None:
+                self.queryset_action = self.allowed_args_dict[pk][2][pk3][1](self.queryset)
+
+        except KeyError as e:
+            return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"detail": repr(e)}, status=status.HTTP_404_NOT_FOUND)
-
-        if self.serializer_class == DummySerializer:
-            return Response({"detail": "URL Not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        return Response(self.messgae, status=status.HTTP_200_OK)
+            return Response({ "exception": repr(e),
+                "detail": repr(e.__dict__['details'])}, status=status.HTTP_400_BAD_REQUEST)
+        
+        self.queryset = self.allowed_args_dict[pk][0](pk2)
+        self.serializer = self.serializer_class(self.queryset)
+        return Response(self.serializer.data, status=status.HTTP_200_OK)    
