@@ -81,7 +81,20 @@ class RouterSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100, required=True)
     status = serializers.CharField(read_only=True)
     external_gateway_info = serializers.DictField(read_only=True)
+    subnet_id = serializers.CharField(max_length=100, required=False)
+
 
     def create(self, validated_data):
         new_router = conn.network.create_router(name=validated_data["name"])
         return new_router
+        
+
+class FloatingIPSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    fixed_ip_address = serializers.IPAddressField(read_only=True)
+    floating_ip_address = serializers.IPAddressField(read_only=True)
+    router_id = serializers.CharField(read_only=True)
+    status = serializers.CharField(read_only=True)
+
+    def create(self, validated_data):
+        raise Http404("Page not found (404)")

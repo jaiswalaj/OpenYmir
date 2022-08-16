@@ -1,4 +1,4 @@
-from .serializers import DummySerializer, NetworkSerializer, ServerSerializer, ImageSerializer, FlavorSerializer, RouterSerializer, SubnetSerializer
+from .serializers import DummySerializer, FloatingIPSerializer, NetworkSerializer, ServerSerializer, ImageSerializer, FlavorSerializer, RouterSerializer, SubnetSerializer
 from rest_framework.response import Response
 from rest_framework import generics, status, permissions
 from .connect import conn
@@ -54,6 +54,7 @@ class ResourceList(generics.ListCreateAPIView):
             "images": (conn.image.images, ImageSerializer, None),
             "flavors": (conn.compute.flavors, FlavorSerializer, None),
             "routers": (conn.network.routers, RouterSerializer, None),
+            "floating-ip": (conn.list_floating_ips, FloatingIPSerializer, None),
         }
 
 
@@ -67,7 +68,7 @@ class ResourceList(generics.ListCreateAPIView):
             return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({ "exception": repr(e),
-                "detail": repr(e.__dict__['details'])}, status=status.HTTP_400_BAD_REQUEST)
+                "detail": repr(e.__dict__)}, status=status.HTTP_400_BAD_REQUEST)
 
         self.serializer = self.serializer_class(self.queryset, many=True)
         return Response(self.serializer.data, status=status.HTTP_200_OK) if self.allowed_args_dict[pk][2] is None else self.allowed_args_dict[pk][2]()
@@ -87,7 +88,7 @@ class ResourceList(generics.ListCreateAPIView):
             return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({ "exception": repr(e),
-                "detail": repr(e.__dict__['details'])}, status=status.HTTP_400_BAD_REQUEST)
+                "detail": repr(e.__dict__)}, status=status.HTTP_400_BAD_REQUEST)
         
         # Show a loader till the following line does not returns new server details as API Response.
         return Response(self.serializer.data, status=status.HTTP_201_CREATED)
@@ -107,15 +108,17 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
             "images": (conn.image.get_image, ImageSerializer),
             "flavors": (conn.compute.get_flavor, FlavorSerializer),
             "routers": (conn.network.get_router, RouterSerializer),
+            "floating-ip": (conn.get_floating_ip, FloatingIPSerializer),
         }
 
         self.allowed_destroy_args_dict = {
             "servers": (conn.compute.delete_server, ServerSerializer, None),
             "networks": (conn.network.delete_network, NetworkSerializer, self.removeAllResourcesFromNetwork),
             "subnets": (conn.network.delete_subnet, SubnetSerializer, None),
-            "images": (conn.image.delete_image, ImageSerializer, None),
-            "flavors": (conn.compute.delete_flavor, FlavorSerializer, None),
+            # "images": (conn.image.delete_image, ImageSerializer, None),
+            # "flavors": (conn.compute.delete_flavor, FlavorSerializer, None),
             "routers": (conn.network.delete_router, RouterSerializer, self.removeAllResourcesFromRouter),
+            "floating-ip": (conn.delete_floating_ip, FloatingIPSerializer, None),
         }
 
 
@@ -168,7 +171,7 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
             return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({ "exception": repr(e),
-                "detail": repr(e.__dict__['details'])}, status=status.HTTP_400_BAD_REQUEST)
+                "detail": repr(e.__dict__)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"detail": "The resource is being deleted"}, status=status.HTTP_204_NO_CONTENT)        
 
@@ -183,7 +186,7 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
             return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({ "exception": repr(e),
-                "detail": repr(e.__dict__['details'])}, status=status.HTTP_400_BAD_REQUEST)
+                "detail": repr(e.__dict__)}, status=status.HTTP_400_BAD_REQUEST)
         
         self.serializer = self.serializer_class(self.queryset)
         return Response(self.serializer.data, status=status.HTTP_200_OK)
@@ -195,21 +198,37 @@ class ResourceUpdate(generics.UpdateAPIView):
     serialized_data = []
     # queryset_action = None
 
-    def waitForServerStart(self, server):
+    def addExternalGatewayToRouter(self, router, request):
+        public_network = conn.get_network("public")
+        ex_gw_info = conn._build_external_gateway_info(public_network.id, True, None)
+        updated_router = conn.network.update_router(router, external_gateway_info=ex_gw_info)
+        return updated_router
+
+    def addInternalInterfaceToRouter(self, router, request):
+        new_router = conn.network.add_interface_to_router(router, subnet_id=request.data['subnet_id'])
+        return new_router
+
+    def startServer(self, server, request):
+        conn.compute.start_server(server)
         return conn.compute.wait_for_server(server, status='ACTIVE', failures=None, interval=2, wait=120)
 
-    def waitForServerStop(self, server):
+    def stopServer(self, server, request):
+        conn.compute.stop_server(server)
         return conn.compute.wait_for_server(server, status='SHUTOFF', failures=None, interval=2, wait=120)
 
-    def associateFloatingIP(self, server):
+    def associateFloatingIP(self, server, request):
         return conn.add_auto_ip(server, wait=True, timeout=120, reuse=True)
 
     def __init__(self, *args, **kwargs):
         self.allowed_args_dict = {
             "servers": (conn.compute.get_server, ServerSerializer, {
-                "start": (conn.compute.start_server, self.waitForServerStart),
-                "stop": (conn.compute.stop_server, self.waitForServerStop),
-                "allocate-floating-ip": (self.associateFloatingIP, None),
+                "start": self.startServer,
+                "stop": self.stopServer,
+                "allocate-floating-ip": self.associateFloatingIP,
+            }),
+            "routers": (conn.network.get_router, RouterSerializer, {
+                "add-external-gateway": self.addExternalGatewayToRouter,
+                "add-internal-interface": self.addInternalInterfaceToRouter,
             }),
         }
 
@@ -223,16 +242,13 @@ class ResourceUpdate(generics.UpdateAPIView):
             # Resource Serialier
             self.serializer_class = self.allowed_args_dict[pk][1]
             # Resource Action to be updated in the Instance
-            self.queryset_action = self.allowed_args_dict[pk][2][pk3][0](self.queryset)
-            # Resource After Action Requirement
-            if self.allowed_args_dict[pk][2][pk3][1] is not None:
-                self.queryset_action = self.allowed_args_dict[pk][2][pk3][1](self.queryset)
+            self.queryset_action = self.allowed_args_dict[pk][2][pk3](self.queryset, request)
 
         except KeyError as e:
             return Response({"detail": "Page not found (404)"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({ "exception": repr(e),
-                "detail": repr(e.__dict__['details'])}, status=status.HTTP_400_BAD_REQUEST)
+                "detail": repr(e.__dict__)}, status=status.HTTP_400_BAD_REQUEST)
         
         self.queryset = self.allowed_args_dict[pk][0](pk2)
         self.serializer = self.serializer_class(self.queryset)
