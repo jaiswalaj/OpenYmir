@@ -1,6 +1,13 @@
+username = "admin"
+password = "admin"
+
+# First should be Network Dict
+# Second should be Router Dict
+# Third should be Server Dict
+
 resources = [
     {
-        "resource": "netork", 
+        "resource": "network", 
         "details": [
             {
                 "network_name": "net1",
@@ -43,7 +50,7 @@ resources = [
                 "image_name": "cirros-0.5.2-x86_64-disk",
                 "flavor_name": "m1.nano",
                 "network_name": "net1",
-                "floating_ip": True,
+                "floating_ip": False,
                 "status": "ACTIVE",
             },
             {
@@ -59,7 +66,7 @@ resources = [
                 "image_name": "cirros-0.5.2-x86_64-disk",
                 "flavor_name": "m1.nano",
                 "network_name": "net3",
-                "floating_ip": True,
+                "floating_ip": False,
                 "status": "ACTIVE",
             },
             {
@@ -67,7 +74,7 @@ resources = [
                 "image_name": "cirros-0.5.2-x86_64-disk",
                 "flavor_name": "m1.nano",
                 "network_name": "net1",
-                "floating_ip": True,
+                "floating_ip": False,
                 "status": "SHUTOFF",
             },
         ]
