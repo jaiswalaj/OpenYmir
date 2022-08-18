@@ -1,4 +1,4 @@
-from .serializers import DummySerializer, FloatingIPSerializer, NetworkSerializer, ServerSerializer, ImageSerializer, FlavorSerializer, RouterSerializer, SubnetSerializer
+from .serializers import DummySerializer, FloatingIPSerializer, NetworkSerializer, SecurityGroupSerializer, ServerSerializer, ImageSerializer, FlavorSerializer, RouterSerializer, SubnetSerializer
 from rest_framework.response import Response
 from rest_framework import generics, status, permissions
 from .connect import conn
@@ -55,6 +55,7 @@ class ResourceList(generics.ListCreateAPIView):
             "flavors": (conn.compute.flavors, FlavorSerializer, None),
             "routers": (conn.network.routers, RouterSerializer, None),
             "floating-ip": (conn.list_floating_ips, FloatingIPSerializer, None),
+            "security-groups": (conn.list_security_groups, SecurityGroupSerializer, None),
         }
 
 
@@ -109,6 +110,7 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
             "flavors": (conn.compute.get_flavor, FlavorSerializer),
             "routers": (conn.network.get_router, RouterSerializer),
             "floating-ip": (conn.get_floating_ip, FloatingIPSerializer),
+            "security-groups": (conn.get_security_group, SecurityGroupSerializer),
         }
 
         self.allowed_destroy_args_dict = {
@@ -119,6 +121,7 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
             # "flavors": (conn.compute.delete_flavor, FlavorSerializer, None),
             "routers": (conn.network.delete_router, RouterSerializer, self.removeAllResourcesFromRouter),
             "floating-ip": (conn.delete_floating_ip, FloatingIPSerializer, None),
+            "security-groups": (conn.delete_security_group, SecurityGroupSerializer, None)
         }
 
 
@@ -219,6 +222,19 @@ class ResourceUpdate(generics.UpdateAPIView):
     def associateFloatingIP(self, server, request):
         return conn.add_auto_ip(server, wait=True, timeout=120, reuse=True)
 
+    def addRuleToSecurityGroup(self, security_group, request):
+        updated_security_group = conn.create_security_group_rule(security_group.id, 
+                                        port_range_min=request.data['port_range_min'], 
+                                        port_range_max=request.data['port_range_max'],
+                                        protocol=request.data['protocol'],
+                                        direction=request.data['direction'])
+        return updated_security_group
+        
+
+    def deleteRuleFromSecurityGroup(self, security_group, request):
+        updated_security_group = conn.delete_security_group_rule(request.data['rule_id'])
+        return updated_security_group
+
     def __init__(self, *args, **kwargs):
         self.allowed_args_dict = {
             "servers": (conn.compute.get_server, ServerSerializer, {
@@ -229,6 +245,10 @@ class ResourceUpdate(generics.UpdateAPIView):
             "routers": (conn.network.get_router, RouterSerializer, {
                 "add-external-gateway": self.addExternalGatewayToRouter,
                 "add-internal-interface": self.addInternalInterfaceToRouter,
+            }),
+            "security-groups": (conn.get_security_group, SecurityGroupSerializer, {
+                "add-security-rule": self.addRuleToSecurityGroup,
+                "delete-security-rule": self.deleteRuleFromSecurityGroup,
             }),
         }
 

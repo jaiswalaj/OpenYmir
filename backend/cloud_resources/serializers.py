@@ -98,3 +98,33 @@ class FloatingIPSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         raise Http404("Page not found (404)")
+
+
+class SecurityGroupSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    name = serializers.CharField(max_length=50, required=True)
+    description = serializers.CharField(max_length=100, required=True)
+    stateful = serializers.BooleanField(read_only=True)
+    security_group_rules = serializers.ListField(read_only=True)
+    rule_id = serializers.CharField(max_length=50, required=False)
+    port_range_min = serializers.IntegerField(required=False)
+    port_range_max = serializers.IntegerField(required=False)
+    protocol = serializers.CharField(max_length=20, required=False)     
+    # Allowed Protocol Inputs: [None, 'ah', 'dccp', 'egp', 'esp', 'gre', 'hopopt', 'icmp', 'igmp', 'ip', 'ipip', 'ipv6-encap', 'ipv6-frag', 'ipv6-icmp', 'icmpv6', 'ipv6-nonxt', 'ipv6-opts', 'ipv6-route', 'ospf', 'pgm', 'rsvp', 'sctp', 'tcp', 'udp', 'udplite', 'vrrp'] and integer representations [0 to 255] are supported.
+    direction = serializers.CharField(max_length=10, required=False)    # ingress and egress
+
+    def create(self, validated_data):
+        new_security_group = conn.create_security_group(validated_data["name"], validated_data["description"])
+        return new_security_group
+
+
+# class SecurityGroupRuleSerializer(serializers.Serializer):
+#     id = serializers.CharField(read_only=True)
+#     name = serializers.CharField(max_length=50, required=True)
+#     description = serializers.CharField(max_length=100, required=True)
+#     stateful = serializers.BooleanField(read_only=True)
+#     security_group_rules = serializers.ListField(read_only=True)
+
+#     def create(self, validated_data):
+#         new_security_group = conn.create_security_group(validated_data["name"], validated_data["description"])
+#         return new_security_group
