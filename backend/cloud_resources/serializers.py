@@ -25,6 +25,7 @@ class ServerSerializer(serializers.Serializer):
     status = serializers.CharField(read_only=True)
     power_state = serializers.CharField(read_only=True)
     networks = serializers.CharField(max_length=100, required=True)
+    created_at = serializers.DateTimeField(read_only=True)
 
     def create(self, validated_data):
         serverCreated = conn.compute.create_server(name=validated_data["name"], image_id=validated_data["image_id"], 

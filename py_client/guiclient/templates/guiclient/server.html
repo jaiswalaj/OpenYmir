@@ -1,0 +1,75 @@
+{% extends 'guiclient/base.html' %}
+
+{% block content %}
+    <div style="background-color: white; margin-bottom: 1px; padding: 8px;">
+        <span class="fs-5 fw-semibold" style="font-size: 30px !important;">Server List</span>
+    </div>
+    <div style="background-color: white; padding: 15px; width: 100%;">
+        <div class="row">
+                
+            {% for server in servers %}
+            <div class="col-sm-6">
+                <div class="card mb-5">
+                    <div class="card-body">
+                        <h5 class="card-title">Server Name: {{ server.name }}</h5>
+                        <small>Server Id: {{ server.id }}</small> <br>
+                        <small>Image Name: {{ server.image_name }}</small> <br>
+                        <small>Flavor Name: {{ server.flavor }}</small> <br>
+                        <small>Status: {{ server.status }}</small> <br>
+                        <small>Address: {{ server.private_ip }} 
+                            {% if server.public_floating_ip is not None %}
+                                / {{ server.public_floating_ip }}
+                            {% endif %}
+                        </small> <br>
+                        <div class="mt-1 mb-2">
+                            <a href="{% url 'guiclient:allocate-floating-ip' server.id %}" class="m-1 link-primary">Allocate Floating IP</a>
+                        </div>
+                        <div>
+                            <!-- Button trigger modal -->
+                            <button type="button" class="btn btn-dark m-1" data-bs-toggle="modal" data-bs-target="#exampleModal{{ server.id }}">
+                                View Server Console
+                            </button>
+                            
+                            <!-- Modal -->
+                            <div class="modal fade" id="exampleModal{{ server.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="exampleModalLabel">{{ server.name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+
+                                        <iframe src="{{ server.console_url }}" frameborder="0" width="100%" height="500px" style="pointer-events: none;"></iframe>
+                                    
+                                    </div>
+                                    <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+        
+                            <a href="{% url 'guiclient:start-server' server.id %}" class="m-1 btn btn-success">Start Server</a>
+                            <a href="{% url 'guiclient:stop-server' server.id %}" class="m-1 btn btn-danger">Stop Server</a>        
+                        </div>
+                        <p class="card-text"><small class="text-muted"></small></p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+        </div>
+    </div>
+    
+
+    <script>
+var myModal = document.getElementById('myModal')
+var myInput = document.getElementById('myInput')
+
+myModal.addEventListener('shown.bs.modal', function () {
+  myInput.focus()
+})
+
+    </script>
+{% endblock %}

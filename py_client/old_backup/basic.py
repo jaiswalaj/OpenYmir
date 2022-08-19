@@ -134,7 +134,7 @@ def big_bang():
             allowed_resource_args[resource['resource']](data_value_list)
             
     print("All Resources Generated Successfully")
-    time_interval = Timer(15, big_crunch)
-    time_interval.start()
+    # time_interval = Timer(15, big_crunch)
+    # time_interval.start()
 
 big_bang()
