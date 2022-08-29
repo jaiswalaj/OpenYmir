@@ -17,6 +17,7 @@ class ServerSerializer(serializers.Serializer):
     interface_ip = serializers.CharField(read_only=True)
     key_name = serializers.CharField(read_only=True)
     server_groups = serializers.CharField(read_only=True)
+    security_groups = serializers.CharField(max_length=300, required=False)
     name = serializers.CharField(max_length=100, required=True)
     image = serializers.CharField(read_only=True)
     image_id = serializers.CharField(max_length=100, required=True)
@@ -117,15 +118,3 @@ class SecurityGroupSerializer(serializers.Serializer):
     def create(self, validated_data):
         new_security_group = conn.create_security_group(validated_data["name"], validated_data["description"])
         return new_security_group
-
-
-# class SecurityGroupRuleSerializer(serializers.Serializer):
-#     id = serializers.CharField(read_only=True)
-#     name = serializers.CharField(max_length=50, required=True)
-#     description = serializers.CharField(max_length=100, required=True)
-#     stateful = serializers.BooleanField(read_only=True)
-#     security_group_rules = serializers.ListField(read_only=True)
-
-#     def create(self, validated_data):
-#         new_security_group = conn.create_security_group(validated_data["name"], validated_data["description"])
-#         return new_security_group

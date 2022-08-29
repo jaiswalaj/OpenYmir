@@ -235,12 +235,22 @@ class ResourceUpdate(generics.UpdateAPIView):
         updated_security_group = conn.delete_security_group_rule(request.data['rule_id'])
         return updated_security_group
 
+    def addSecurityGroup(self, server, request):
+        security_group = conn.get_security_group(request.data['security_groups'])
+        return conn.compute.add_security_group_to_server(server, security_group)
+
+    def removeSecurityGroup(self, server, request):
+        security_group = conn.get_security_group(request.data['security_groups'])
+        return conn.compute.remove_security_group_from_server(server, security_group)
+
     def __init__(self, *args, **kwargs):
         self.allowed_args_dict = {
             "servers": (conn.compute.get_server, ServerSerializer, {
                 "start": self.startServer,
                 "stop": self.stopServer,
                 "allocate-floating-ip": self.associateFloatingIP,
+                "add-security-groups": self.addSecurityGroup,
+                "remove-security-groups": self.removeSecurityGroup,
             }),
             "routers": (conn.network.get_router, RouterSerializer, {
                 "add-external-gateway": self.addExternalGatewayToRouter,
