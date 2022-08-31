@@ -117,8 +117,8 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
             "servers": (conn.compute.delete_server, ServerSerializer, None),
             "networks": (conn.network.delete_network, NetworkSerializer, self.removeAllResourcesFromNetwork),
             "subnets": (conn.network.delete_subnet, SubnetSerializer, None),
-            # "images": (conn.image.delete_image, ImageSerializer, None),
-            # "flavors": (conn.compute.delete_flavor, FlavorSerializer, None),
+            "images": (conn.image.delete_image, ImageSerializer, None),
+            "flavors": (conn.compute.delete_flavor, FlavorSerializer, None),
             "routers": (conn.network.delete_router, RouterSerializer, self.removeAllResourcesFromRouter),
             "floating-ip": (conn.delete_floating_ip, FloatingIPSerializer, None),
             "security-groups": (conn.delete_security_group, SecurityGroupSerializer, None)
