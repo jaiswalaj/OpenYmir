@@ -71,6 +71,27 @@ Update (PUT Request) a Resource
 - Data Required to delete a Security Rule from a Security Group: Security Rule ID
 -- http://127.0.0.1:8000/api/resources/security-groups/"Security Group ID Here"/delete-security-rule
 
+## JSON Properties
+JSON properties that should be used to pass values into the endpoints via curl requests.
+
+| Name | Property |
+| ---- | -------- |
+| Name | { "name": "Name of the Resource here" } |
+| Image ID | { "image_id": "ID of a pre-existing Image here" } |
+| Flavor ID | { "flavor_id": "ID of a pre-existing Flavor here" } |
+| Network ID | { "networks": "ID of a pre-existing Network here" } |
+| CIDR | { "cidr": "CIDR of the Subnet to be created here" } |
+| Description  | { "description": "Description of the Security Group here" } |
+| Security Group ID | { "security_groups": "ID of a pre-existing Security Group here" } |
+| Subnet ID | { "subnet_id": "ID of a pre-existing Subnet here" } |
+| Port range min | { "port_range_min": "Port Range starting point here" } |
+| Port range max | { "port_range_max": "Port Range ending point here" } |
+| Protocol | { "protocol": "Allowed Protocols here" } |
+| Direction | { "direction": "Ingress/Egress" } |
+| Security Rule ID | { "rule_id": "ID of a pre-existing Security Group Rule here" } |
+
+**Allowed Protocols are: [None, 'ah', 'dccp', 'egp', 'esp', 'gre', 'hopopt', 'icmp', 'igmp', 'ip', 'ipip', 'ipv6-encap', 'ipv6-frag', 'ipv6-icmp', 'icmpv6', 'ipv6-nonxt', 'ipv6-opts', 'ipv6-route', 'ospf', 'pgm', 'rsvp', 'sctp', 'tcp', 'udp', 'udplite', 'vrrp']**
+
 In order to use these endpoints, one must follow these steps: 
 - Create a user, whose credentials would be used to make API Requests.
 - Start the Django Server from within the folder named as "backend"
