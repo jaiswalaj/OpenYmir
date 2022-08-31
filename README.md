@@ -38,48 +38,49 @@ Create Resources (POST Request)
 -- http://127.0.0.1:8000/api/resources/security-groups/
 
 Retrieve Details (GET Request) and Destroy (DELETE Request) a Resource
-- http://127.0.0.1:8000/api/resources/servers/<Server ID Here>/
-- http://127.0.0.1:8000/api/resources/networks/<Network ID Here>/
-- http://127.0.0.1:8000/api/resources/subnets/<Subnet ID Here>/
-- http://127.0.0.1:8000/api/resources/images/<Image ID Here>/
-- http://127.0.0.1:8000/api/resources/flavors/<Flavor ID Here>/
-- http://127.0.0.1:8000/api/resources/routers/<Router ID Here>/
-- http://127.0.0.1:8000/api/resources/floating-ip/<Floating IP ID Here>/
-- http://127.0.0.1:8000/api/resources/security-groups/<Security Group ID Here>/
+- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/
+- http://127.0.0.1:8000/api/resources/networks/"Network ID Here"/
+- http://127.0.0.1:8000/api/resources/subnets/"Subnet ID Here"/
+- http://127.0.0.1:8000/api/resources/images/"Image ID Here"/
+- http://127.0.0.1:8000/api/resources/flavors/"Flavor ID Here"/
+- http://127.0.0.1:8000/api/resources/routers/"Router ID Here"/
+- http://127.0.0.1:8000/api/resources/floating-ip/"Floating IP ID Here"/
+- http://127.0.0.1:8000/api/resources/security-groups/"Security Group ID Here"/
 
 Update (PUT Request) a Resource
 - Data Required to start a Server: None
--- http://127.0.0.1:8000/api/resources/servers/<Server ID Here>/start
+-- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/start
 - Data Required to stop a Server: None
--- http://127.0.0.1:8000/api/resources/servers/<Server ID Here>/stop
+-- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/stop
 - Data Required to allocate a Floating IP to a Server: None
--- http://127.0.0.1:8000/api/resources/servers/<Server ID Here>/allocate-floating-ip
+-- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/allocate-floating-ip
 - Data Required to add a Security Group to a Server: Security Group ID
--- http://127.0.0.1:8000/api/resources/servers/<Server ID Here>/add-security-groups
+-- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/add-security-groups
 - Data Required to remove a Security Group from a Server: Security Group ID
--- http://127.0.0.1:8000/api/resources/servers/<Server ID Here>/remove-security-groups
+-- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/remove-security-groups
 
 
 - Data Required to add External Gateway to a Router: None (Limitation: External Gateway Network must be named as "public")
--- http://127.0.0.1:8000/api/resources/routers/<Router ID Here>/add-external-gateway
+-- http://127.0.0.1:8000/api/resources/routers/"Router ID Here"/add-external-gateway
 - Data Required to add Internal Interface to a Router: Subnet ID
--- http://127.0.0.1:8000/api/resources/routers/<Router ID Here>/add-internal-interface
+-- http://127.0.0.1:8000/api/resources/routers/"Router ID Here"/add-internal-interface
 
 
 - Data Required to add new Security Rule to a Security Group: Port range min(initial port number of the range), Port range max(final port number of the range), Protocol, and Direction
--- http://127.0.0.1:8000/api/resources/security-groups/<Security Group ID Here>/add-security-rule
+-- http://127.0.0.1:8000/api/resources/security-groups/"Security Group ID Here"/add-security-rule
 - Data Required to delete a Security Rule from a Security Group: Security Rule ID
--- http://127.0.0.1:8000/api/resources/security-groups/<Security Group ID Here>/delete-security-rule
+-- http://127.0.0.1:8000/api/resources/security-groups/"Security Group ID Here"/delete-security-rule
 
 In order to use these endpoints, one must follow these steps: 
 - Create a user, whose credentials would be used to make API Requests.
 - Start the Django Server from within the folder named as "backend"
 - Update "clouds.yaml" for OpenStack credentials
 
-## Note:
+## Development
 
-> OpenYmir is still in Development Phase, so help your mate to make this project better.
-> Contact me at: 
+Want to contribute? Great!
+> OpenYmir is still in Development Phase, so help your mate to make this project better and efficient.
+> Contact me at: jaiswalaj716@gmail.com
 
 ## Tech
 
@@ -91,12 +92,7 @@ OpenYmir uses a number of open source projects to work properly:
 
 And of course OpenYmir itself is open source.
 
-## Development
-
-Want to contribute? Great!
-> Contact me at: jaiswalaj716@gmail.com
-
 ## License
 MIT
 
-**Free Software, Hell Yeah!**
+**Is this Free, Hell Yeah!**
