@@ -7,7 +7,7 @@ OpenYmir is built using Django Rest Framework and OpenStack SDK to provide  feat
 
 OpenYmir allows you to perform CRUD operations on Networks, Subnets, Routers, Servers, Security Groups, and Floating IPs. Some key highlights of the operations which can be performed using OpenYmir API calls are as follows:-
 
-- Create, List, Retrieve, Delete, Start and Stop a Server
+- Create, List, Retrieve, Delete, Rename, Start and Stop a Server
 - Allocate Floating IP to a Server
 - Delete a Network completely and safely ( i.e. deleting Servers on the Network but not Routers)
 - Provide proper Exceptions in case of any failure
@@ -54,6 +54,8 @@ Update (PUT Request) a Resource
 -- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/stop
 - Data Required to allocate a Floating IP to a Server: None
 -- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/allocate-floating-ip
+- Data Required to rename a Server: Name
+-- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/rename-server
 - Data Required to add a Security Group to a Server: Security Group ID
 -- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/add-security-groups
 - Data Required to remove a Security Group from a Server: Security Group ID
