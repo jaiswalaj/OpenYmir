@@ -73,6 +73,9 @@ class ImageSerializer(serializers.Serializer):
 class FlavorSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
     name = serializers.CharField(read_only=True)
+    disk = serializers.CharField(read_only=True)        # Disk Size in GB
+    ram = serializers.CharField(read_only=True)         # Ram Size in MB
+    vcpus = serializers.CharField(read_only=True)
 
     def create(self, validated_data):
         raise Http404("Page not found (404)")

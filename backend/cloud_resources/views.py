@@ -243,6 +243,10 @@ class ResourceUpdate(generics.UpdateAPIView):
         security_group = conn.get_security_group(request.data['security_groups'])
         return conn.compute.remove_security_group_from_server(server, security_group)
 
+    def renameServer(self, server, request):
+        return conn.compute.update_server(server, name=request.data['name'])
+
+
     def __init__(self, *args, **kwargs):
         self.allowed_args_dict = {
             "servers": (conn.compute.get_server, ServerSerializer, {
@@ -251,6 +255,7 @@ class ResourceUpdate(generics.UpdateAPIView):
                 "allocate-floating-ip": self.associateFloatingIP,
                 "add-security-groups": self.addSecurityGroup,
                 "remove-security-groups": self.removeSecurityGroup,
+                "rename-server": self.renameServer,
             }),
             "routers": (conn.network.get_router, RouterSerializer, {
                 "add-external-gateway": self.addExternalGatewayToRouter,
