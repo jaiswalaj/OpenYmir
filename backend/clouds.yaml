@@ -9,10 +9,10 @@
 clouds:
   openstack:
     auth:
-      auth_url: http://192.168.56.101/identity
-      username: "admin"
-      password: "nomoresecret"
-      project_id: 05559e211de549a7a76d5127cb950d94
+      auth_url: http://192.168.36.129:5000
+      username: "admin2"
+      password: "admin2"
+      project_id: d525a3ec045045d3b430420458e9a990
       project_name: "admin"
       user_domain_name: "Default"
     region_name: "RegionOne"

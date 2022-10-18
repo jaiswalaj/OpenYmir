@@ -12,6 +12,7 @@ OpenYmir allows you to perform CRUD operations on Networks, Subnets, Routers, Se
 - Delete a Network completely and safely ( i.e. deleting Servers on the Network but not Routers)
 - Provide proper Exceptions in case of any failure
 
+
 ## API Endpoints
 Following are the enpoints and the type of request which needs to make to perform various operations on OpenStack Cloud Platform. However, for the sake of ease Domain Name is being replaced by "127.0.0.1:8000" in the endpoints listed below.
 
@@ -26,7 +27,7 @@ List Resources (GET Request)
 - http://127.0.0.1:8000/api/resources/security-groups/
 
 Create Resources (POST Request)
-- Data Required for creating Server: Name, Image ID, Flavor ID, and Network ID
+- Data Required for creating Server: Name, Image ID, Flavor ID, Network ID, and Password(optional)
 -- http://127.0.0.1:8000/api/resources/servers/
 - Data Required for creating Network: Name
 -- http://127.0.0.1:8000/api/resources/networks/
@@ -36,6 +37,12 @@ Create Resources (POST Request)
 -- http://127.0.0.1:8000/api/resources/subnets/
 - Data Required for creating Security Group: Name, and Description
 -- http://127.0.0.1:8000/api/resources/security-groups/
+
+<br/>
+
+>Note: Default password for the servers being created without providing custom password will be `openstack`.
+
+<br/>
 
 Retrieve Details (GET Request) and Destroy (DELETE Request) a Resource
 - http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/
@@ -82,6 +89,7 @@ JSON properties that should be used to pass values into the endpoints via curl r
 | Image ID | { "image_id": "ID of a pre-existing Image here" } |
 | Flavor ID | { "flavor_id": "ID of a pre-existing Flavor here" } |
 | Network ID | { "networks": "ID of a pre-existing Network here" } |
+| Password | { "password": "Custom Password for the server being created here" } |
 | CIDR | { "cidr": "CIDR of the Subnet to be created here" } |
 | Description  | { "description": "Description of the Security Group here" } |
 | Security Group ID | { "security_groups": "ID of a pre-existing Security Group here" } |

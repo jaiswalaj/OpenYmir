@@ -29,6 +29,9 @@ class ResourceList(generics.ListCreateAPIView):
             
             try:
                 flavor_name = server.get('flavor', {}).get('name')
+                disk = str(server.get('flavor', {}).get('disk')) + " GB"
+                ram = str(server.get('flavor', {}).get('ram') / 1024)+ " GB"
+                vcpus = server.get('flavor', {}).get('vcpus')
             except:
                 flavor_name = ""
 
@@ -41,6 +44,9 @@ class ResourceList(generics.ListCreateAPIView):
                 "public_floating_ip": public_floating_ip,
                 "image_name": image_name,
                 "flavor": flavor_name,
+                "ram": ram,
+                "disk": disk,
+                "vcpus": vcpus,
                 })
             
         return Response(self.serialized_data, status=status.HTTP_200_OK)
