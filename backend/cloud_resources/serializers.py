@@ -204,3 +204,51 @@ class SecurityGroupSerializer(serializers.Serializer):
     def create(self, validated_data):
         new_security_group = conn.create_security_group(validated_data["name"], validated_data["description"])
         return new_security_group
+
+
+class ProjectSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    name = serializers.CharField(max_length=100, required=True)
+    description = serializers.CharField(read_only=True)
+    
+    is_domain = serializers.BooleanField(read_only=True)
+    is_enabled = serializers.BooleanField(read_only=True)
+    domain_id = serializers.CharField(read_only=True)
+    parent_id = serializers.CharField(read_only=True)
+    options = serializers.CharField(read_only=True)
+
+    user_id = serializers.CharField(max_length=100, write_only=True, required=False)
+    role_id = serializers.CharField(max_length=100, write_only=True, required=False)
+    
+    def create(self, validated_data):
+        new_project = conn.identity.create_project(name=validated_data['name'])
+        return new_project
+
+
+class UserSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    name = serializers.CharField(max_length=100, required=True)
+    email = serializers.CharField(max_length=100)
+    description = serializers.CharField(read_only=True)
+    
+    is_enabled = serializers.BooleanField(read_only=True)
+    domain_id = serializers.CharField(read_only=True)
+    default_project_id = serializers.CharField(read_only=True)
+
+    password = serializers.CharField(max_length=100, required=True, write_only=True)
+    password_expires_at = serializers.CharField(read_only=True)
+
+    def create(self, validated_data):
+        new_user = conn.identity.create_user(name=validated_data['name'], email=validated_data['email'], password=validated_data['password'])
+        return new_user
+
+
+class RoleSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    name = serializers.CharField(max_length=100, required=True)
+    description = serializers.CharField(read_only=True)
+    
+    domain_id = serializers.CharField(read_only=True)
+
+    def create(self, validated_data):
+        raise Http404("Page not found (404)")

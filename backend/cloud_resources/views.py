@@ -1,4 +1,4 @@
-from .serializers import DummySerializer, FloatingIPSerializer, NetworkSerializer, SecurityGroupSerializer, ServerSerializer, ImageSerializer, FlavorSerializer, RouterSerializer, SubnetSerializer
+from .serializers import DummySerializer, FloatingIPSerializer, NetworkSerializer, RoleSerializer, SecurityGroupSerializer, ServerSerializer, ImageSerializer, FlavorSerializer, RouterSerializer, SubnetSerializer, ProjectSerializer, UserSerializer
 from rest_framework.response import Response
 from rest_framework import generics, status, permissions
 from .connect import conn
@@ -54,6 +54,9 @@ class ResourceList(generics.ListCreateAPIView):
 
     def __init__(self, *args, **kwargs):
         self.allowed_args_dict = {
+            "users": (conn.identity.users, UserSerializer, None),
+            "projects": (conn.identity.projects, ProjectSerializer, None),
+            "roles": (conn.identity.roles, RoleSerializer, None),
             "servers": (conn.compute.servers, ServerSerializer, self.customServerListOutput),
             "networks": (conn.network.networks, NetworkSerializer, None),
             "subnets": (conn.network.subnets, SubnetSerializer, None),
@@ -109,6 +112,9 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
 
     def __init__(self, *args, **kwargs):
         self.allowed_retrieve_args_dict = {
+            "users": (conn.identity.get_user, UserSerializer),
+            "projects": (conn.identity.get_project, ProjectSerializer),
+            "roles": (conn.identity.get_role, RoleSerializer),
             "servers": (conn.compute.get_server, ServerSerializer),
             "networks": (conn.network.get_network, NetworkSerializer),
             "subnets": (conn.network.get_subnet, SubnetSerializer),
@@ -120,6 +126,9 @@ class ResourceDetail(generics.RetrieveDestroyAPIView):
         }
 
         self.allowed_destroy_args_dict = {
+            "users": (conn.identity.delete_user, UserSerializer, None),
+            "projects": (conn.identity.delete_project, ProjectSerializer, None),
+            # "roles": (conn.identity.delete_role, RoleSerializer, None),
             "servers": (conn.compute.delete_server, ServerSerializer, None),
             "networks": (conn.network.delete_network, NetworkSerializer, self.removeAllResourcesFromNetwork),
             "subnets": (conn.network.delete_subnet, SubnetSerializer, None),
@@ -207,6 +216,12 @@ class ResourceUpdate(generics.UpdateAPIView):
     serialized_data = []
     # queryset_action = None
 
+    def addUserToProject(self, project, request):
+        role_id = request.data['role_id']
+        user_id = request.data['user_id']
+        updated_project = conn.grant_role(role_id, user=user_id, project=project.id, wait=True)
+        return updated_project
+
     def addExternalGatewayToRouter(self, router, request):
         public_network = conn.get_network("public")
         ex_gw_info = conn._build_external_gateway_info(public_network.id, True, None)
@@ -255,6 +270,15 @@ class ResourceUpdate(generics.UpdateAPIView):
 
     def __init__(self, *args, **kwargs):
         self.allowed_args_dict = {
+            "roles": (conn.identity.get_role, RoleSerializer, {
+                # "rename-server": self.renameServer,
+            }),
+            "users": (conn.identity.get_user, UserSerializer, {
+                # "rename-server": self.renameServer,
+            }),
+            "projects": (conn.identity.get_project, ProjectSerializer, {
+                "add-user": self.addUserToProject,
+            }),
             "servers": (conn.compute.get_server, ServerSerializer, {
                 "start": self.startServer,
                 "stop": self.stopServer,
