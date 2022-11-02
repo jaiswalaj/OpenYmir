@@ -7,6 +7,8 @@ OpenYmir is built using Django Rest Framework and OpenStack SDK to provide  feat
 
 OpenYmir allows you to perform CRUD operations on Networks, Subnets, Routers, Servers, Security Groups, and Floating IPs. Some key highlights of the operations which can be performed using OpenYmir API calls are as follows:-
 
+- Create, List, Retrieve, and Delete Projects, and Users
+- Assign Users to Projects with specific Roles
 - Create, List, Retrieve, Delete, Rename, Start and Stop a Server
 - Allocate Floating IP to a Server
 - Delete a Network completely and safely ( i.e. deleting Servers on the Network but not Routers)
@@ -17,6 +19,9 @@ OpenYmir allows you to perform CRUD operations on Networks, Subnets, Routers, Se
 Following are the enpoints and the type of request which needs to make to perform various operations on OpenStack Cloud Platform. However, for the sake of ease Domain Name is being replaced by "127.0.0.1:8000" in the endpoints listed below.
 
 List Resources (GET Request)
+- http://127.0.0.1:8000/api/resources/users/
+- http://127.0.0.1:8000/api/resources/projects/
+- http://127.0.0.1:8000/api/resources/roles/
 - http://127.0.0.1:8000/api/resources/servers/
 - http://127.0.0.1:8000/api/resources/networks/
 - http://127.0.0.1:8000/api/resources/subnets/
@@ -27,6 +32,10 @@ List Resources (GET Request)
 - http://127.0.0.1:8000/api/resources/security-groups/
 
 Create Resources (POST Request)
+- Data Required for creating User: Name, Email, and Password
+-- http://127.0.0.1:8000/api/resources/users/
+- Data Required for creating Project: Name
+-- http://127.0.0.1:8000/api/resources/projects/
 - Data Required for creating Server: Name, Image ID, Flavor ID, Network ID, and Password(optional)
 -- http://127.0.0.1:8000/api/resources/servers/
 - Data Required for creating Network: Name
@@ -45,6 +54,8 @@ Create Resources (POST Request)
 <br/>
 
 Retrieve Details (GET Request) and Destroy (DELETE Request) a Resource
+- http://127.0.0.1:8000/api/resources/users/"User ID Here"/
+- http://127.0.0.1:8000/api/resources/projects/"Project ID Here"/
 - http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/
 - http://127.0.0.1:8000/api/resources/networks/"Network ID Here"/
 - http://127.0.0.1:8000/api/resources/subnets/"Subnet ID Here"/
@@ -55,6 +66,11 @@ Retrieve Details (GET Request) and Destroy (DELETE Request) a Resource
 - http://127.0.0.1:8000/api/resources/security-groups/"Security Group ID Here"/
 
 Update (PUT Request) a Resource
+
+- Data Required to add a User to a Project with a specific Role: User ID/Name and Role ID/Name
+-- http://127.0.0.1:8000/api/resources/projects/"Project ID Here"/add-user
+
+
 - Data Required to start a Server: None
 -- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/start
 - Data Required to stop a Server: None
@@ -86,10 +102,13 @@ JSON properties that should be used to pass values into the endpoints via curl r
 | Name | Property |
 | ---- | -------- |
 | Name | { "name": "Name of the Resource here" } |
+| Email | { "email": "Email of the User here" } |
+| Password | { "password": "Custom Password for the resource being created here" } |
 | Image ID | { "image_id": "ID of a pre-existing Image here" } |
 | Flavor ID | { "flavor_id": "ID of a pre-existing Flavor here" } |
 | Network ID | { "networks": "ID of a pre-existing Network here" } |
-| Password | { "password": "Custom Password for the server being created here" } |
+| User ID | { "user_id": "ID of a pre-existing User here" } |
+| Role ID | { "role_id": "ID of a pre-existing Role here" } |
 | CIDR | { "cidr": "CIDR of the Subnet to be created here" } |
 | Description  | { "description": "Description of the Security Group here" } |
 | Security Group ID | { "security_groups": "ID of a pre-existing Security Group here" } |

@@ -4,7 +4,7 @@ from .connect import conn
 import base64
 
 class DummySerializer(serializers.Serializer):
-    messgae = serializers.CharField(max_length=1, read_only=True)
+    messgae = serializers.CharField(read_only=True)
 
     def create(self, validated_data):
         raise Http404("Page not found (404)")
@@ -19,14 +19,14 @@ class ServerSerializer(serializers.Serializer):
     updated_at = serializers.DateTimeField(read_only=True)
     
     image = serializers.CharField(read_only=True)
-    image_id = serializers.CharField(max_length=100, required=True)
+    image_id = serializers.CharField(max_length=100, required=True, write_only=True)
     flavor = serializers.CharField(read_only=True)
-    flavor_id = serializers.CharField(max_length=50, required=True)
-    networks = serializers.CharField(max_length=100, required=True)
+    flavor_id = serializers.CharField(max_length=50, required=True, write_only=True)
+    networks = serializers.CharField(max_length=100, required=True, write_only=True)
     
     launched_at = serializers.DateTimeField(read_only=True)
     terminated_at = serializers.DateTimeField(read_only=True)
-    password = serializers.CharField(max_length=50, required=False)
+    password = serializers.CharField(max_length=50, required=False, write_only=True)
     server_groups = serializers.CharField(read_only=True)
     security_groups = serializers.CharField(max_length=300, required=False)
     power_state = serializers.CharField(read_only=True)
@@ -153,7 +153,7 @@ class RouterSerializer(serializers.Serializer):
     routes = serializers.CharField(read_only=True)
 
     external_gateway_info = serializers.DictField(read_only=True)
-    subnet_id = serializers.CharField(max_length=100, required=False)
+    subnet_id = serializers.CharField(max_length=100, required=False, write_only=True)
     
 
     def create(self, validated_data):
@@ -163,7 +163,7 @@ class RouterSerializer(serializers.Serializer):
 
 class FloatingIPSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
-    name = serializers.CharField(max_length=100, required=True)
+    name = serializers.CharField(read_only=True)
     description = serializers.CharField(read_only=True)
     status = serializers.CharField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
@@ -194,11 +194,11 @@ class SecurityGroupSerializer(serializers.Serializer):
     stateful = serializers.BooleanField(read_only=True)
     security_group_rules = serializers.ListField(read_only=True)
 
-    rule_id = serializers.CharField(max_length=50, required=False)
-    protocol = serializers.CharField(max_length=20, required=False)     
-    direction = serializers.CharField(max_length=10, required=False)    # ingress and egress
-    port_range_min = serializers.IntegerField(required=False)
-    port_range_max = serializers.IntegerField(required=False)
+    rule_id = serializers.CharField(max_length=50, required=False, write_only=True)
+    protocol = serializers.CharField(max_length=20, required=False, write_only=True)     
+    direction = serializers.CharField(max_length=10, required=False, write_only=True)    # ingress and egress
+    port_range_min = serializers.IntegerField(required=False, write_only=True)
+    port_range_max = serializers.IntegerField(required=False, write_only=True)
     # Allowed Protocol Inputs: [None, 'ah', 'dccp', 'egp', 'esp', 'gre', 'hopopt', 'icmp', 'igmp', 'ip', 'ipip', 'ipv6-encap', 'ipv6-frag', 'ipv6-icmp', 'icmpv6', 'ipv6-nonxt', 'ipv6-opts', 'ipv6-route', 'ospf', 'pgm', 'rsvp', 'sctp', 'tcp', 'udp', 'udplite', 'vrrp'] and integer representations [0 to 255] are supported.
 
     def create(self, validated_data):
@@ -228,7 +228,7 @@ class ProjectSerializer(serializers.Serializer):
 class UserSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
     name = serializers.CharField(max_length=100, required=True)
-    email = serializers.CharField(max_length=100)
+    email = serializers.CharField(max_length=100, required=True)
     description = serializers.CharField(read_only=True)
     
     is_enabled = serializers.BooleanField(read_only=True)
@@ -245,7 +245,7 @@ class UserSerializer(serializers.Serializer):
 
 class RoleSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
-    name = serializers.CharField(max_length=100, required=True)
+    name = serializers.CharField(read_only=True)
     description = serializers.CharField(read_only=True)
     
     domain_id = serializers.CharField(read_only=True)
