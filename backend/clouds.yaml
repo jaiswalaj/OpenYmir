@@ -9,10 +9,10 @@
 clouds:
   openstack:
     auth:
-      auth_url: http://192.168.36.129:5000
+      auth_url: http://192.168.29.129:5000
       username: "admin2"
-      password: "admin2"
-      project_id: d525a3ec045045d3b430420458e9a990
+      password: 'admin2'
+      project_id: dbd8d81fb9f749d3a00ab633d2922bd3
       project_name: "admin"
       user_domain_name: "Default"
     region_name: "RegionOne"

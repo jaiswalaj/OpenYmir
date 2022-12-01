@@ -267,6 +267,9 @@ class ResourceUpdate(generics.UpdateAPIView):
     def renameServer(self, server, request):
         return conn.compute.update_server(server, name=request.data['name'])
 
+    def createServerSnapshot(self, server, request):
+        return conn.create_image_snapshot(request.data['name'], server, wait=True)
+
 
     def __init__(self, *args, **kwargs):
         self.allowed_args_dict = {
@@ -286,6 +289,7 @@ class ResourceUpdate(generics.UpdateAPIView):
                 "add-security-groups": self.addSecurityGroup,
                 "remove-security-groups": self.removeSecurityGroup,
                 "rename-server": self.renameServer,
+                "create-snapshot": self.createServerSnapshot,
             }),
             "routers": (conn.network.get_router, RouterSerializer, {
                 "add-external-gateway": self.addExternalGatewayToRouter,

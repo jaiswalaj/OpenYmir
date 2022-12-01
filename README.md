@@ -79,6 +79,8 @@ Update (PUT Request) a Resource
 -- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/allocate-floating-ip
 - Data Required to rename a Server: Name
 -- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/rename-server
+- Data Required to create a snapshot of a Server: Name
+-- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/create-snapshot
 - Data Required to add a Security Group to a Server: Security Group ID
 -- http://127.0.0.1:8000/api/resources/servers/"Server ID Here"/add-security-groups
 - Data Required to remove a Security Group from a Server: Security Group ID
