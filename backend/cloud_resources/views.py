@@ -1,7 +1,8 @@
 from .serializers import DummySerializer, FloatingIPSerializer, NetworkSerializer, RoleSerializer, SecurityGroupSerializer, ServerSerializer, ImageSerializer, FlavorSerializer, RouterSerializer, SubnetSerializer, ProjectSerializer, UserSerializer
 from rest_framework.response import Response
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status, permissions, serializers
 from .connect import conn
+import time
 
 
 class ResourceList(generics.ListCreateAPIView):
@@ -270,6 +271,42 @@ class ResourceUpdate(generics.UpdateAPIView):
     def createServerSnapshot(self, server, request):
         return conn.create_image_snapshot(request.data['name'], server, wait=True)
 
+    def resizeServer(self,server, request):
+        flavor = conn.compute.get_flavor(request.data['flavor_id'])
+        original_flavor_id = server.flavor.id
+
+        if server.flavor.ram > flavor.ram:
+            raise serializers.ValidationError({'detail': 'Could not downgrade flavor of the Server.'})
+        elif server.flavor.ram == flavor.ram:
+            raise serializers.ValidationError({'detail': 'Flavor must be changed to resize the Server.'})
+        else:
+            try:
+                conn.compute.stop_server(server)
+                conn.compute.wait_for_server(server, status='SHUTOFF', failures=None, interval=2, wait=120)
+            except Exception as e:
+                pass
+
+            result = conn.compute.resize_server(server, flavor)
+            time.sleep(10)
+            
+            try:
+                result = conn.compute.confirm_server_resize(server)
+                time.sleep(20)
+            except Exception as e:
+                time.sleep(20)
+                pass
+
+            conn.compute.start_server(server)
+            conn.compute.wait_for_server(server, status='ACTIVE', failures=None, interval=2, wait=120)
+
+            new_server = conn.compute.get_server(server.id)
+            
+            if original_flavor_id == new_server.flavor.id:
+                raise serializers.ValidationError({'detail': 'Error Occurred! Please contact the administrator.'})
+            
+            return new_server
+        
+
 
     def __init__(self, *args, **kwargs):
         self.allowed_args_dict = {
@@ -290,6 +327,7 @@ class ResourceUpdate(generics.UpdateAPIView):
                 "remove-security-groups": self.removeSecurityGroup,
                 "rename-server": self.renameServer,
                 "create-snapshot": self.createServerSnapshot,
+                "resize-server": self.resizeServer,
             }),
             "routers": (conn.network.get_router, RouterSerializer, {
                 "add-external-gateway": self.addExternalGatewayToRouter,
